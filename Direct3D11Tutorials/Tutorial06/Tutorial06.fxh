@@ -95,28 +95,31 @@ float4 PS( PS_INPUT input) : SV_Target
     float4 ambient = materialAmb;
 	float4 diffuse = diff * materialDiff * lightCol;
 	float4 specular = materialSpec * lightCol * spec; //assuming white specular
-    float4 woodColor = txWoodColor.Sample(samLinear, input.Tex);
-    float4 stoneColor = txTileColor.Sample(samLinear2, input.Tex);
+  
 
     // Determine the final color based on the distance from the center
-    float2 center = float2(0.5, 0.5); // Assuming the center is at (0.5, 0.5)
+    /*float2 center = float2(0.5, 0.5); // Assuming the center is at (0.5, 0.5)
     float radius = 0.5; // Adjust the radius as needed
-    float distance = length(input.Tex - center);
+    float distance = length(input.Tex - center);*/
+// Determine the final color based on the normal direction
+float4 finalColor;
 
-    float4 finalColor;
-    if (distance < radius)
-    {
-        finalColor = txWoodColor.Sample(samLinear, input.Tex);
-    }
-    else
-    {
-        finalColor = txStoneColor.Sample(samLinear2, input.Tex);
-    }
+if (dot(input.Norm, float3(0.0, 0.0, 1.0)) > 0.0)
+{
+    // Inside face of the cube to be wood
+    finalColor = txWoodColor.Sample(samLinear, input.Tex);
+}
+else
+{
+    // Outside faces of the cube to be stone
+    finalColor = txStoneColor.Sample(samLinear2, input.Tex);
+}
 
 // Apply lighting
-    float4 light = (ambient + diffuse + specular);
-    float4 color = finalColor * light;
+float4 light = (ambient + diffuse + specular);
+float4 color = finalColor * light;
 
-    return color;
+return color;
+
 }
 
