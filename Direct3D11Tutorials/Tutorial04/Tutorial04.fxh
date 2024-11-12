@@ -22,9 +22,16 @@ struct VS_OUTPUT
     float4 Color : COLOR0;
 };
 
+
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
+
+/*Create Cornell
+box by
+using THREE
+different vertexshaders.*/
+
 VS_OUTPUT VS( float4 Pos : POSITION, float4 Color : COLOR )
 {
     VS_OUTPUT output = (VS_OUTPUT)0;
@@ -43,3 +50,19 @@ float4 PS( VS_OUTPUT input ) : SV_Target
 {
     return input.Color;
 }
+
+float4 PS_Cube1( VS_OUTPUT input ) : SV_Target
+{
+    return float4(1.0f, 0.0f, 0.0f, 1.0f ); //red
+}
+
+float4 PS_Cube2( VS_OUTPUT input ) : SV_Target
+{
+    return float4(0.0f, 1.0f, 0.0f, 1.0f ); //green
+}
+
+float4 PS_Cube3( VS_OUTPUT input ) : SV_Target
+{
+    return float4(0.0f, 0.0f, 1.0f, 1.0f ); //blue
+}
+

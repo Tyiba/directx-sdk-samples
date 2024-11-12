@@ -56,6 +56,10 @@ IDXGISwapChain1*        g_pSwapChain1 = nullptr;
 ID3D11RenderTargetView* g_pRenderTargetView = nullptr;
 ID3D11VertexShader*     g_pVertexShader = nullptr;
 ID3D11PixelShader*      g_pPixelShader = nullptr;
+ID3D11PixelShader*      g_pPixelCube1 = nullptr;
+ID3D11PixelShader*      g_pPixelCube2 = nullptr;
+ID3D11PixelShader*      g_pPixelCube3 = nullptr;
+
 ID3D11InputLayout*      g_pVertexLayout = nullptr;
 ID3D11Buffer*           g_pVertexBuffer = nullptr;
 ID3D11Buffer*           g_pIndexBuffer = nullptr;
@@ -381,21 +385,87 @@ HRESULT InitDevice()
     g_pImmediateContext->IASetInputLayout( g_pVertexLayout );
 
 	// Compile the pixel shader
-	ID3DBlob* pPSBlob = nullptr;
-    hr = CompileShaderFromFile( L"Tutorial04.fxh", "PS", "ps_4_0", &pPSBlob );
-    if( FAILED( hr ) )
+    ID3DBlob* pPSBlob = nullptr;
+    hr = CompileShaderFromFile(L"Tutorial04.fxh", "PS", "ps_4_0", &pPSBlob);
+    if (FAILED(hr))
     {
-        MessageBox( nullptr,
-                    L"The FX file cannot be compiled.  Please run this executable from the directory that contains the FX file.", L"Error", MB_OK );
+        MessageBox(nullptr,
+            L"The FX file cannot be compiled.  Please run this executable from the directory that contains the FX file.", L"Error", MB_OK);
         return hr;
     }
 
-	// Create the pixel shader
-	hr = g_pd3dDevice->CreatePixelShader( pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), nullptr, &g_pPixelShader );
-	pPSBlob->Release();
-    if( FAILED( hr ) )
+    // Create the pixel shaders
+    hr = g_pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), nullptr, &g_pPixelShader);
+    if (FAILED(hr))
+    {
+        pPSBlob->Release();
         return hr;
+    }
 
+    hr = CompileShaderFromFile(L"Tutorial04.fxh", "PS_Cube1", "ps_4_0", &pPSBlob);
+    if (FAILED(hr))
+    {
+        MessageBox(nullptr,
+            L"The FX file cannot be compiled.  Please run this executable from the directory that contains the FX file.", L"Error", MB_OK);
+        return hr;
+    }
+
+    // Create the pixel shaders
+    hr = g_pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), nullptr, &g_pPixelCube1);
+    if (FAILED(hr))
+    {
+        pPSBlob->Release();
+        return hr;
+    }
+
+    hr = CompileShaderFromFile(L"Tutorial04.fxh", "PS_Cube2", "ps_4_0", &pPSBlob);
+    if (FAILED(hr))
+    {
+        MessageBox(nullptr,
+            L"The FX file cannot be compiled.  Please run this executable from the directory that contains the FX file.", L"Error", MB_OK);
+        return hr;
+    }
+
+    // Create the pixel shaders
+    hr = g_pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), nullptr, &g_pPixelCube2);
+    if (FAILED(hr))
+    {
+        pPSBlob->Release();
+        return hr;
+    }
+
+	pPSBlob->Release();
+
+    //code for rasterizer
+	ID3D11RasterizerState* g_pRasterizerState = nullptr;
+	D3D11_RASTERIZER_DESC rasterizerDesc;
+	ZeroMemory(&rasterizerDesc, sizeof(D3D11_RASTERIZER_DESC));
+	rasterizerDesc.FillMode = D3D11_FILL_SOLID;
+	rasterizerDesc.CullMode = D3D11_CULL_BACK; //D3D11_CULL_NONE; // D3D11_CULL_BACK; // D3D11_CULL_FRONT; // 
+
+	hr = g_pd3dDevice->CreateRasterizerState(&rasterizerDesc, &g_pRasterizerState);
+	if (FAILED(hr))
+	{
+		return hr;
+	}
+	g_pImmediateContext->RSSetState(g_pRasterizerState);
+
+
+
+
+    //Create a cornell box
+	//do i need to define each wall or just one wall and then rotate it?
+
+    //Vertices for a wall
+	SimpleVertex verticesWall[] =
+	{
+		{ XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) },
+		{ XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+		{ XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f) },
+		{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
+	};
+
+   
     // Create vertex buffer
     SimpleVertex vertices[] =
     {
@@ -474,7 +544,7 @@ HRESULT InitDevice()
 	g_World = XMMatrixIdentity();
 
     // Initialize the view matrix
-	XMVECTOR Eye = XMVectorSet( 0.0f, 1.0f, -5.0f, 0.0f );
+	XMVECTOR Eye = XMVectorSet( 0.0f, 2.50f, -5.0f, 0.0f );
 	XMVECTOR At = XMVectorSet( 0.0f, 1.0f, 0.0f, 0.0f );
 	XMVECTOR Up = XMVectorSet( 0.0f, 1.0f, 0.0f, 0.0f );
 	g_View = XMMatrixLookAtLH( Eye, At, Up );
@@ -499,6 +569,9 @@ void CleanupDevice()
     if( g_pVertexLayout ) g_pVertexLayout->Release();
     if( g_pVertexShader ) g_pVertexShader->Release();
     if( g_pPixelShader ) g_pPixelShader->Release();
+	if (g_pPixelCube1) g_pPixelCube1->Release();
+	if (g_pPixelCube2) g_pPixelCube2->Release();
+	if (g_pPixelCube3) g_pPixelCube3->Release();
     if( g_pRenderTargetView ) g_pRenderTargetView->Release();
     if( g_pSwapChain1 ) g_pSwapChain1->Release();
     if( g_pSwapChain ) g_pSwapChain->Release();
@@ -539,9 +612,6 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 }
 
 
-//--------------------------------------------------------------------------------------
-// Render a frame
-//--------------------------------------------------------------------------------------
 void Render()
 {
     // Update our time
@@ -559,36 +629,84 @@ void Render()
         t = ( timeCur - timeStart ) / 1000.0f;
     }
 
-    //
-    // Animate the cube
-    //
-	g_World = XMMatrixRotationY( t );
-
-    //
     // Clear the back buffer
-    //
-    g_pImmediateContext->ClearRenderTargetView( g_pRenderTargetView, Colors::MidnightBlue );
+    g_pImmediateContext->ClearRenderTargetView(g_pRenderTargetView, Colors::MidnightBlue);
 
-    //
     // Update variables
-    //
     ConstantBuffer cb;
-	cb.mWorld = XMMatrixTranspose( g_World );
-	cb.mView = XMMatrixTranspose( g_View );
-	cb.mProjection = XMMatrixTranspose( g_Projection );
-	g_pImmediateContext->UpdateSubresource( g_pConstantBuffer, 0, nullptr, &cb, 0, 0 );
+    cb.mWorld = XMMatrixTranspose(g_World);
+    cb.mView = XMMatrixTranspose(g_View);
+    cb.mProjection = XMMatrixTranspose(g_Projection);
+    g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb, 0, 0);
 
-    //
-    // Renders a triangle
-    //
-	g_pImmediateContext->VSSetShader( g_pVertexShader, nullptr, 0 );
-	g_pImmediateContext->VSSetConstantBuffers( 0, 1, &g_pConstantBuffer );
-	g_pImmediateContext->PSSetShader( g_pPixelShader, nullptr, 0 );
-	g_pImmediateContext->DrawIndexed( 36, 0, 0 );        // 36 vertices needed for 12 triangles in a triangle list
+    // Clear the back buffer
+    g_pImmediateContext->ClearRenderTargetView(g_pRenderTargetView, Colors::MidnightBlue);
 
-    //
-    // Present our back buffer to our front buffer
-    //
-    g_pSwapChain->Present( 0, 0 );
+    // Set vertex buffer
+    UINT stride = sizeof(SimpleVertex);
+    UINT offset = 0;
+    g_pImmediateContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer, &stride, &offset);
+
+    // Set index buffer
+    g_pImmediateContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+
+    // Set primitive topology
+    g_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    // Set vertex shader
+    g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
+    g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer);
+
+
+    //--------------------------------------------------------------------------------------
+    // Draw first cube with first pixel shader
+    //--------------------------------------------------------------------------------------
+    XMMATRIX translation1 = XMMatrixTranslation(0.0f, -1.0f, 0.0f);
+    XMMATRIX scale1 = XMMatrixScaling(10.0f, 10.0f, 10.0f);
+    cb.mWorld = XMMatrixTranspose(g_World * scale1 * translation1);
+    g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb, 0, 0);
+
+    // Disable culling for the first cube to see inside
+    D3D11_RASTERIZER_DESC rasterDesc;
+    ZeroMemory(&rasterDesc, sizeof(rasterDesc));
+    rasterDesc.FillMode = D3D11_FILL_SOLID;
+    rasterDesc.CullMode = D3D11_CULL_NONE;
+    rasterDesc.FrontCounterClockwise = FALSE;
+    rasterDesc.DepthClipEnable = TRUE;
+
+    ID3D11RasterizerState* pRasterState = nullptr;
+    g_pd3dDevice->CreateRasterizerState(&rasterDesc, &pRasterState);
+    g_pImmediateContext->RSSetState(pRasterState);
+
+    g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
+    g_pImmediateContext->DrawIndexed(36, 0, 0);
+
+    // Restore culling for other cubes
+    rasterDesc.CullMode = D3D11_CULL_BACK;
+    g_pd3dDevice->CreateRasterizerState(&rasterDesc, &pRasterState);
+    g_pImmediateContext->RSSetState(pRasterState);
+
+    if (pRasterState) pRasterState->Release();
+
+    // Draw second cube with second pixel shader
+    XMMATRIX translation2 = XMMatrixTranslation(-2.0f, 0.0f, 0.0f);
+    XMMATRIX scale2 = XMMatrixScaling(1.0f, 2.0f, 1.0f);
+    cb.mWorld = XMMatrixTranspose(g_World * scale2 * translation2);
+    g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb, 0, 0);
+    g_pImmediateContext->PSSetShader(g_pPixelCube1, nullptr, 0);
+    g_pImmediateContext->DrawIndexed(36, 0, 0);
+
+    // Draw third cube with third pixel shader
+    XMMATRIX translation3 = XMMatrixTranslation(2.0f, 0.0f, 0.0f);
+    XMMATRIX scale3 = XMMatrixScaling(1.0f, 1.0f, 1.0f);
+    cb.mWorld = XMMatrixTranspose(g_World * scale3 * translation3);
+    g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb, 0, 0);
+    g_pImmediateContext->PSSetShader(g_pPixelCube2, nullptr, 0);
+    g_pImmediateContext->DrawIndexed(36, 0, 0);
+
+    // Present the information rendered to the back buffer to the front buffer (the screen)
+    g_pSwapChain->Present(0, 0);
 }
+
+    
 
