@@ -405,7 +405,10 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="Coin.dds" />
+    <Image Include="rockheight.tga" />
+    <Image Include="rockNormal.bmp" />
     <Image Include="rocks.DDS" />
+    <Image Include="stones.DDS" />
     <Image Include="Tiles.dds" />
     <Image Include="Wood.dds" />
   </ItemGroup>

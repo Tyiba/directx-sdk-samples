@@ -49,5 +49,14 @@
     <Image Include="Wood.dds">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="rockheight.tga">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="rockNormal.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="stones.DDS">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>
