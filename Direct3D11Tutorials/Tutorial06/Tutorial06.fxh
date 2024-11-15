@@ -25,9 +25,6 @@ cbuffer ConstantBuffer : register(b0)
 Texture2D txWoodColor : register( t0 );
 SamplerState samLinear : register( s0 );
 
-Texture2D txStoneColor : register( t1 );
-SamplerState samLinear2 : register( s1 );
-
 
 //--------------------------------------------------------------------------------------
 struct VS_INPUT
@@ -102,22 +99,22 @@ float4 PS( PS_INPUT input) : SV_Target
     float radius = 0.5; // Adjust the radius as needed
     float distance = length(input.Tex - center);*/
 // Determine the final color based on the normal direction
-float4 finalColor;
-
-if (dot(input.Norm, float3(0.0, 0.0, 1.0)) > 0.0)
-{
-    // Inside face of the cube to be wood
+	float4 finalColor;
     finalColor = txWoodColor.Sample(samLinear, input.Tex);
-}
-else
-{
-    // Outside faces of the cube to be stone
-    finalColor = txStoneColor.Sample(samLinear2, input.Tex);
-}
+	/*if (dot(input.Norm, float3(0.0, 0.0, 1.0)) > 0.0)
+	{
+	// Inside face of the cube to be wood
+		
+	}
+	else
+	{
+	// Outside faces of the cube to be stone
+		finalColor = txStoneColor.Sample(samLinear2, input.Tex);
+	}*/
 
-// Apply lighting
-float4 light = (ambient + diffuse + specular);
-float4 color = finalColor * light;
+	// Apply lighting
+	float4 light = (ambient + diffuse + specular) * finalColor;
+    float4 color = light;
 
 return color;
 

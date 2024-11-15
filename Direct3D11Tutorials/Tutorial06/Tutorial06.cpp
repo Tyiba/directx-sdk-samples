@@ -47,7 +47,6 @@ struct ConstantBuffer
 	XMMATRIX mProjection;
     XMFLOAT4 vLightPos;
     XMFLOAT4 vCameraPos;
-    XMFLOAT4 vCameraLookAt
     Material vMaterial;
 };
 
@@ -455,10 +454,10 @@ HRESULT InitDevice()
     SimpleVertex vertices[] =
     {
         //TOP FACE REMOVAL FOR EX 6
-        /*{ XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
+        { XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
         { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
         { XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(0.0f,1.0f) },
-        { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },*/
+        { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
 
         { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
         { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, -1.0f, 0.0f), XMFLOAT2(2.0f, 0.0f) },
@@ -488,7 +487,7 @@ HRESULT InitDevice()
 
     D3D11_BUFFER_DESC bd = {};
     bd.Usage = D3D11_USAGE_DEFAULT;
-    bd.ByteWidth = sizeof( SimpleVertex ) * 20;
+    bd.ByteWidth = sizeof( SimpleVertex ) * 24;
     bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	bd.CPUAccessFlags = 0;
 
@@ -521,10 +520,13 @@ HRESULT InitDevice()
 
         19,17,16,
         18,17,19,
+
+		22,20,21,
+		23,20,22,
     };
 
     bd.Usage = D3D11_USAGE_DEFAULT;
-    bd.ByteWidth = sizeof( WORD ) * 30;        // 36 vertices needed for 12 triangles in a triangle list
+    bd.ByteWidth = sizeof( WORD ) * 36;        // 36 vertices needed for 12 triangles in a triangle list
     bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	bd.CPUAccessFlags = 0;
     InitData.pSysMem = indices;
@@ -553,9 +555,6 @@ HRESULT InitDevice()
     if (FAILED(hr))
         return hr;
 
-	hr = CreateDDSTextureFromFile(g_pd3dDevice, L"rocks.DDS", nullptr, &tiles_TextureRV);
-	if (FAILED(hr))
-		return hr;
 
     //Create the sampler
 	D3D11_SAMPLER_DESC sampDesc = {};
@@ -570,9 +569,6 @@ HRESULT InitDevice()
 	if (FAILED(hr))
 		return hr;
 
-	hr = g_pd3dDevice->CreateSamplerState(&sampDesc, &tiles_Sampler);
-	if (FAILED(hr))
-		return hr;
 
     D3D11_RASTERIZER_DESC rasterDesc;
     // create raster state
@@ -716,11 +712,6 @@ void Render()
     g_pImmediateContext->PSSetSamplers(0, 1, &wood_Sampler);
     g_pImmediateContext->PSSetShaderResources(0, 1, &wood_TextureRV);
 
-    //add tile sampler and texture
-	g_pImmediateContext->PSSetSamplers(1, 1, &tiles_Sampler);
-	g_pImmediateContext->PSSetShaderResources(1, 1, &tiles_TextureRV);
-
-
     g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb1, 0, 0);
 
     // Material properties for the first cube
@@ -737,11 +728,11 @@ void Render()
     g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
     g_pImmediateContext->PSSetConstantBuffers(0, 1, &g_pConstantBuffer);
 
-    g_pImmediateContext->DrawIndexed(30, 0, 0);
+    g_pImmediateContext->DrawIndexed(36, 0, 0);
 
     // Translate and scale the world matrix for the second cube
     XMMATRIX translationMatrix = XMMatrixTranslation(3.0f, 0.0f, 0.0f);
-    //XMMATRIX scaleMatrix = XMMatrixScaling(1.0f, 1.0f, 30.0f);
+    XMMATRIX scaleMatrix = XMMatrixScaling(1.0f, 1.0f, 30.0f);
     cb1.mWorld = XMMatrixTranspose(translationMatrix * g_World);
 
     cb1.vMaterial.Ambient = XMFLOAT4(0.4f, 0.4f, 0.4f, 1.0f);
@@ -750,7 +741,7 @@ void Render()
 
 
     g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb1, 0, 0);
-    g_pImmediateContext->DrawIndexed(30, 0, 0);
+    g_pImmediateContext->DrawIndexed(36, 0, 0);
 
     // Translate and scale the world matrix for the third cube
     translationMatrix = XMMatrixTranslation(-3.0f, 0.0f, 0.0f);
@@ -761,7 +752,7 @@ void Render()
     cb1.vMaterial.Specular = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
 
     g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb1, 0, 0);
-    g_pImmediateContext->DrawIndexed(30, 0, 0);
+    g_pImmediateContext->DrawIndexed(36, 0, 0);
 
     // Present our back buffer to our front buffer
     g_pSwapChain->Present(0, 0);
